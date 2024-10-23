@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.sp</groupId>
-	<artifactId>expense-tracker </artifactId>
+	<artifactId>expense-tracker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>expense-tracker </name>
-	<description>Expense tracker  project for Spring Boot</description>
+	<name>expense-tracker</name>
+	<description>Expense tracker project for Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>
