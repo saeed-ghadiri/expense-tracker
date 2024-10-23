@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16.1-alpine3.19
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: expense-tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_container:/var/lib/postgresql/data
+
+volumes:
+  postgres_container:
+    driver: local
+               
