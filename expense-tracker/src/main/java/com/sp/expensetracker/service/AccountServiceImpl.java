@@ -1,6 +1,6 @@
 package com.sp.expensetracker.service;
 
-import com.sp.expensetracker.exceptions.UserAlreadyExistsException;
+import com.sp.expensetracker.exceptions.AccountAlreadyExistsException;
 import com.sp.expensetracker.model.Account;
 import com.sp.expensetracker.repository.AccountRepository;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     public boolean accountExists(String username) {
-        return accountRepository.existsByUsername(username);
+        return accountRepository.existsByName(username);
     }
 
     public boolean emailExists(String email) {
@@ -23,11 +23,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     public Account saveAccount(Account account) {
-        if (accountExists(account.getUsername())) {
-            throw new UserAlreadyExistsException("Username already exists");
+        if (accountExists(account.getName())) {
+            throw new AccountAlreadyExistsException("Name already exists");
         }
         if (emailExists(account.getEmail())) {
-            throw new UserAlreadyExistsException("Email already exists");
+            throw new AccountAlreadyExistsException("Email already exists");
         }
         return accountRepository.save(account);
     }
