@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping(value = "/api/account")
+@RequestMapping(value = "/api")
 @CrossOrigin(origins = "*")
 public class AccountController {
 
@@ -20,7 +20,7 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/auth/signup")
     public ResponseEntity<?> signup(@RequestBody @Validated Account account) {
         account.setCreatedAt(LocalDateTime.now());
         accountService.saveAccount(account);
