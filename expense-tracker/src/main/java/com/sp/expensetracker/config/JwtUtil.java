@@ -16,12 +16,23 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String jwtSecret;
     private final Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 60 * 10; // 10 hours
+    private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 10; // 10 days
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 12)) // 12 hours valid
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY))
+                .signWith(key)
+                .compact();
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
                 .signWith(key)
                 .compact();
     }
@@ -51,6 +62,7 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
+    // validate both access & refresh token
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
