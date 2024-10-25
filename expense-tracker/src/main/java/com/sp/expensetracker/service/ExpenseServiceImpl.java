@@ -50,11 +50,12 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
     }
 
-    public List<CategorySummaryDTO> getExpenseSummary(LocalDate startDate, LocalDate endDate, String email) {
+    @Override
+    public List<CategoryResultDTO> reportAndAlertByCategory( String email, LocalDate startDate, LocalDate endDate) {
         List<Expense> expenses = queryExpenses(startDate, endDate, email);
-        Map<String, BigDecimal> categoryTotals = groupExpensesByCategory(expenses);
-        List<CategorySummaryDTO> topCategories = sortAndSelectTopCategories(categoryTotals);
-        insertAlerts(topCategories);
-        return topCategories;
+        Map<String, BigDecimal> categoryTotals = groupExpenses(expenses, Expense::getCategory);
+        List<CategoryResultDTO> top3Categories = sortAndSelectTopCategories(categoryTotals, 3);
+        insertAlerts(top3Categories);
+        return top3Categories;
     }
 }
