@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,14 @@ import java.util.stream.Collectors;
 public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+
+    List<String> predefinedAlerts = List.of(
+            "Spending too much on ",
+            "Consider reducing your expenses for ",
+            "You're exceeding your budget for",
+            "Try to save more on ",
+            "Review your recent shopping expenses by "
+    );
 
     public ExpenseServiceImpl(ExpenseRepository expenseRepository) {
         this.expenseRepository = expenseRepository;
@@ -45,8 +54,9 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     public void insertAlerts(List<CategoryResultDTO> topCategories) {
+        Random random = new Random();
         for (CategoryResultDTO summary : topCategories) {
-            summary.setMessage("High spending on " + summary.getCategory() + " detected!");
+            summary.setMessage(predefinedAlerts.get(random.nextInt(predefinedAlerts.size())) + summary.getCategory() );
         }
     }
 
