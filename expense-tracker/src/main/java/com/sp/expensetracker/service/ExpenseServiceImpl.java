@@ -1,8 +1,16 @@
 package com.sp.expensetracker.service;
 
 import com.sp.expensetracker.model.Expense;
+import com.sp.expensetracker.model.dto.CategoryResultDTO;
 import com.sp.expensetracker.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ExpenseServiceImpl implements ExpenseService {
@@ -16,5 +24,37 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public void addExpense(Expense expense) {
         expenseRepository.save(expense);
+    }
+
+    public List<Expense> queryExpenses(LocalDate startDate, LocalDate endDate, String email) {
+        return expenseRepository.findExpensesByDateRangeAndEmail(startDate, endDate, email);
+    }
+
+    public Map<String, BigDecimal> groupExpenses(List<Expense> expenses, Function<Expense, String> groupBy) {
+        return expenses.stream()
+                .collect(Collectors.groupingBy(groupBy,
+                        Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)));
+    }
+
+    public List<CategoryResultDTO> sortAndSelectTopCategories(Map<String, BigDecimal> categoryTotals, int count) {
+        return categoryTotals.entrySet().stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .map(entry -> CategoryResultDTO.builder().category(entry.getKey()).totalAmount(entry.getValue()).build())
+                .limit(count) // Select top 3
+                .collect(Collectors.toList());
+    }
+
+    public void insertAlerts(List<CategoryResultDTO> topCategories) {
+        for (CategoryResultDTO summary : topCategories) {
+            summary.setMessage("High spending on " + summary.getCategory() + " detected!");
+        }
+    }
+
+    public List<CategorySummaryDTO> getExpenseSummary(LocalDate startDate, LocalDate endDate, String email) {
+        List<Expense> expenses = queryExpenses(startDate, endDate, email);
+        Map<String, BigDecimal> categoryTotals = groupExpensesByCategory(expenses);
+        List<CategorySummaryDTO> topCategories = sortAndSelectTopCategories(categoryTotals);
+        insertAlerts(topCategories);
+        return topCategories;
     }
 }
