@@ -13,12 +13,10 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
-    private String jwtSecret;
     private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 60 * 10; // 10 hours
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 10; // 10 days
-
-
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     public String generateToken(String accountName) {
         Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());

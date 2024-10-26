@@ -1,12 +1,9 @@
 package com.sp.expensetracker.controller;
 
-import com.sp.expensetracker.model.Expense;
 import com.sp.expensetracker.model.dto.CategoryResultDTO;
 import com.sp.expensetracker.model.dto.ExpenseAddDTO;
 import com.sp.expensetracker.model.dto.ExpenseReportDTO;
 import com.sp.expensetracker.service.ExpenseService;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +31,8 @@ public class ExpenseController {
 
     @PostMapping("/report")
     public List<CategoryResultDTO> reportExpense(@RequestBody ExpenseReportDTO expenseReportDTO) {
-    return expenseService.reportAndAlertByCategory(expenseReportDTO.getAccountName(), LocalDate.parse(expenseReportDTO.getStartDate()), LocalDate.parse(expenseReportDTO.getEndDate()));
+        return expenseService.reportAndAlertByCategory(expenseReportDTO.getAccountName(), LocalDate.parse(expenseReportDTO.getStartDate()), LocalDate.parse(expenseReportDTO.getEndDate()));
     }
-
 
 
 }

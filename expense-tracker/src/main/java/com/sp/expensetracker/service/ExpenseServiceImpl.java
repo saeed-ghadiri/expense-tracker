@@ -71,12 +71,12 @@ public class ExpenseServiceImpl implements ExpenseService {
     public void insertAlerts(List<CategoryResultDTO> topCategories) {
         Random random = new Random();
         for (CategoryResultDTO summary : topCategories) {
-            summary.setMessage(predefinedAlerts.get(random.nextInt(predefinedAlerts.size())) + summary.getCategory() );
+            summary.setMessage(predefinedAlerts.get(random.nextInt(predefinedAlerts.size())) + summary.getCategory());
         }
     }
 
     @Override
-    public List<CategoryResultDTO> reportAndAlertByCategory( String accountName, LocalDate startDate, LocalDate endDate) {
+    public List<CategoryResultDTO> reportAndAlertByCategory(String accountName, LocalDate startDate, LocalDate endDate) {
         List<Expense> expenses = queryExpenses(accountName, startDate, endDate);
         Map<String, BigDecimal> categoryTotals = groupExpenses(expenses, Expense::getCategory);
         List<CategoryResultDTO> top3Categories = sortAndSelectTopCategories(categoryTotals, 3);
