@@ -59,7 +59,7 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@RequestBody SigninDTO singinDTO) {
+    public ResponseEntity<String> signin(@RequestBody SigninDTO singinDTO) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(singinDTO.getName(), singinDTO.getPassword()));
         final UserDetails userDetails = customUserDetailsService.loadUserByUsername(singinDTO.getName());
         final String jwt = jwtUtil.generateToken(userDetails.getUsername());
