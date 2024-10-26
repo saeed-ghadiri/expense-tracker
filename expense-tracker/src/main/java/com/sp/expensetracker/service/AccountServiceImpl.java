@@ -5,6 +5,8 @@ import com.sp.expensetracker.model.Account;
 import com.sp.expensetracker.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class AccountServiceImpl implements AccountService {
 
@@ -14,21 +16,23 @@ public class AccountServiceImpl implements AccountService {
         this.accountRepository = accountRepository;
     }
 
+    @Override
     public boolean accountExists(String username) {
         return accountRepository.existsByName(username);
     }
 
+    @Override
     public boolean emailExists(String email) {
         return accountRepository.existsByEmail(email);
     }
 
+    @Override
     public Account saveAccount(Account account) {
-        if (accountExists(account.getName())) {
-            throw new AccountAlreadyExistsException("Name already exists");
-        }
-        if (emailExists(account.getEmail())) {
-            throw new AccountAlreadyExistsException("Email already exists");
-        }
         return accountRepository.save(account);
+    }
+
+    @Override
+    public Optional<Account> findByName(String name) {
+        return accountRepository.findByName(name);
     }
 }
