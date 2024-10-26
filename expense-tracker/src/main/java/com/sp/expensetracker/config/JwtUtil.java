@@ -20,10 +20,10 @@ public class JwtUtil {
 
 
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(String accountName) {
         Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         return Jwts.builder()
-                .subject(userDetails.getUsername())
+                .subject(accountName)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY))
                 .signWith(key)

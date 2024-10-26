@@ -1,6 +1,7 @@
 package com.sp.expensetracker.controller;
 
 import com.sp.expensetracker.config.JwtUtil;
+import com.sp.expensetracker.exceptions.AccountAlreadyExistsException;
 import com.sp.expensetracker.model.Account;
 import com.sp.expensetracker.model.dto.SigninDTO;
 import com.sp.expensetracker.service.AccountService;
@@ -15,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/auth")
@@ -43,17 +45,24 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody @Validated Account account) {
+        if (accountService.accountExists(account.getName())) {
+            throw new AccountAlreadyExistsException("Name already exists");
+        }
+        if (accountService.emailExists(account.getEmail())) {
+            throw new AccountAlreadyExistsException("Email already exists");
+        }
         account.setCreatedAt(LocalDateTime.now());
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         accountService.saveAccount(account);
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
+        final String jwt = jwtUtil.generateToken(account.getName());
+        return ResponseEntity.ok(jwt);
     }
 
     @PostMapping("/signin")
     public ResponseEntity<?> signin(@RequestBody SigninDTO singinDTO) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(singinDTO.getName(), singinDTO.getPassword()));
         final UserDetails userDetails = customUserDetailsService.loadUserByUsername(singinDTO.getName());
-        final String jwt = jwtUtil.generateToken(userDetails);
+        final String jwt = jwtUtil.generateToken(userDetails.getUsername());
         return ResponseEntity.ok(jwt);
     }
 
@@ -63,8 +72,12 @@ public class AuthController {
             String name = jwtUtil.extractName(refreshToken);
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(name);
             if (jwtUtil.validateToken(refreshToken, userDetails)) {
-                String newAccessToken = jwtUtil.generateToken(userDetails);
-                return ResponseEntity.ok(newAccessToken);
+                String newAccessToken = jwtUtil.generateToken(userDetails.getUsername());
+                String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+                return ResponseEntity.ok(Map.of(
+                        "accessToken", newAccessToken,
+                        "refreshToken", newRefreshToken
+                ));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
             }
@@ -72,4 +85,5 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Could not refresh token");
         }
     }
+
 }
