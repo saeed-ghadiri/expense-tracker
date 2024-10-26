@@ -5,6 +5,7 @@ import com.sp.expensetracker.model.dto.CategoryResultDTO;
 import com.sp.expensetracker.model.dto.ExpenseAddDTO;
 import com.sp.expensetracker.model.dto.ExpenseReportDTO;
 import com.sp.expensetracker.service.ExpenseService;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/expense")
+@CrossOrigin(origins = "*")
 public class ExpenseController {
 
 
