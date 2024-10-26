@@ -2,6 +2,8 @@ package com.sp.expensetracker.controller;
 
 import com.sp.expensetracker.model.Expense;
 import com.sp.expensetracker.model.dto.CategoryResultDTO;
+import com.sp.expensetracker.model.dto.ExpenseAddDTO;
+import com.sp.expensetracker.model.dto.ExpenseReportDTO;
 import com.sp.expensetracker.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,14 +25,14 @@ public class ExpenseController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addExpense(@Valid @RequestBody Expense expense) {
-        expenseService.addExpense(expense);
+    public ResponseEntity<String> addExpense(@RequestBody ExpenseAddDTO expenseAddDTO) {
+        expenseService.addExpense(expenseAddDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body("Expense added successfully");
     }
 
     @PostMapping("/report")
-    public List<CategoryResultDTO> reportExpense(String email, LocalDate startDate, LocalDate endDate ) {
-    return expenseService.reportAndAlertByCategory(email, startDate, endDate);
+    public List<CategoryResultDTO> reportExpense(@RequestBody ExpenseReportDTO expenseReportDTO) {
+    return expenseService.reportAndAlertByCategory(expenseReportDTO.getAccountName(), LocalDate.parse(expenseReportDTO.getStartDate()), LocalDate.parse(expenseReportDTO.getEndDate()));
     }
 
 

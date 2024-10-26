@@ -12,10 +12,13 @@ import java.util.List;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
-    @Query("SELECT e FROM expense e WHERE e.date BETWEEN :startDate AND :endDate AND e.account.email = :email")
-    List<Expense> findExpensesByDateRangeAndEmail(
+    @Query("SELECT e FROM expense e JOIN e.account a " +
+            "WHERE a.name = :accountName " +
+            "AND e.date BETWEEN :startDate AND :endDate")
+    List<Expense> findExpensesByAccountNameAndDateRange(
+            @Param("accountName") String accountName,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("email") String email);
+            @Param("endDate") LocalDate endDate
+    );
 }
 

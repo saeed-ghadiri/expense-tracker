@@ -2,6 +2,7 @@ package com.sp.expensetracker.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,7 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Amount is mandatory")
+    @NotNull(message = "Amount is mandatory")
     private BigDecimal amount;
 
     @NotBlank(message = "Category is mandatory")
@@ -29,7 +30,7 @@ public class Expense {
 
     private String description;
 
-    @NotBlank(message = "Date is mandatory")
+    @NotNull(message = "Date is mandatory")
     private LocalDate date;
 
     private LocalTime time;
