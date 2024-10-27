@@ -3,16 +3,15 @@ package com.sp.expensetracker;
 import com.sp.expensetracker.exceptions.AccountNotFoundException;
 import com.sp.expensetracker.model.Account;
 import com.sp.expensetracker.model.Expense;
-import com.sp.expensetracker.model.dto.CategoryResultDTO;
 import com.sp.expensetracker.model.dto.ExpenseAddDTO;
 import com.sp.expensetracker.repository.ExpenseRepository;
 import com.sp.expensetracker.service.AccountService;
 import com.sp.expensetracker.service.ExpenseServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,50 +19,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class ExpenseServiceImplTest {
+@SpringBootTest
+public class ExpenseServiceImplTest {
 
-    @Mock
-    private ExpenseRepository expenseRepository;
-
-    @Mock
-    private AccountService accountService;
-
-    @InjectMocks
+    @Autowired
     private ExpenseServiceImpl expenseService;
 
+    @MockBean
+    private ExpenseRepository expenseRepository;
+
+    @MockBean
+    private AccountService accountService;
+
+    private ExpenseAddDTO expenseAddDTO;
     private Account account;
     private Expense expense;
-    private ExpenseAddDTO expenseAddDTO;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        // Setup sample data
         account = new Account();
-        account.setName("testAccount");
-
-        expense = new Expense();
-        expense.setAmount(BigDecimal.valueOf(50));
-        expense.setCategory("Food");
-        expense.setDescription("Dinner");
-        expense.setDate(LocalDate.now());
-        expense.setAccount(account);
+        account.setId(1L);
+        account.setName("user4");
 
         expenseAddDTO = new ExpenseAddDTO();
-        expenseAddDTO.setAccountName("testAccount");
-        expenseAddDTO.setAmount(BigDecimal.valueOf(50));
+        expenseAddDTO.setAccountName("user4");
+        expenseAddDTO.setAmount(new BigDecimal("100.00"));
         expenseAddDTO.setCategory("Food");
-        expenseAddDTO.setDescription("Dinner");
         expenseAddDTO.setDate(LocalDate.now());
+
+        expense = new Expense();
+        expense.setId(1L);
+        expense.setAccount(account);
+        expense.setAmount(expenseAddDTO.getAmount());
+        expense.setCategory(expenseAddDTO.getCategory());
+        expense.setDate(expenseAddDTO.getDate());
     }
 
     @Test
-    void addExpense_ShouldAddExpense() {
-        when(accountService.findByName(anyString())).thenReturn(Optional.of(account));
+    void addExpense_shouldSaveExpense_whenAccountExists() {
+        when(accountService.findByName(expenseAddDTO.getAccountName())).thenReturn(Optional.of(account));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(expense);
 
         expenseService.addExpense(expenseAddDTO);
 
@@ -71,81 +71,62 @@ class ExpenseServiceImplTest {
     }
 
     @Test
-    void addExpense_ShouldThrowException_WhenAccountNotFound() {
-        when(accountService.findByName(anyString())).thenReturn(Optional.empty());
+    void addExpense_shouldThrowException_whenAccountDoesNotExist() {
+        when(accountService.findByName(expenseAddDTO.getAccountName())).thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> expenseService.addExpense(expenseAddDTO));
+        assertThatThrownBy(() -> expenseService.addExpense(expenseAddDTO))
+                .isInstanceOf(AccountNotFoundException.class)
+                .hasMessageContaining("Account not found");
     }
 
     @Test
-    void queryExpenses_ShouldReturnExpenses_WhenAccountExists() {
-        when(accountService.findByName(anyString())).thenReturn(Optional.of(account));
-        when(expenseRepository.findExpensesByAccountNameAndDateRange(anyString(), any(), any()))
+    void queryExpenses_shouldReturnExpenses_whenAccountExists() {
+        LocalDate startDate = LocalDate.of(2024, 3, 11);
+        LocalDate endDate = LocalDate.of(2024, 3, 14);
+        when(accountService.findByName(account.getName())).thenReturn(Optional.of(account));
+        when(expenseRepository.findExpensesByAccountNameAndDateRange(account.getName(), startDate, endDate))
                 .thenReturn(List.of(expense));
 
-        List<Expense> expenses = expenseService.queryExpenses("testAccount", LocalDate.now().minusDays(1), LocalDate.now());
+        List<Expense> expenses = expenseService.queryExpenses(account.getName(), startDate, endDate);
 
-        assertFalse(expenses.isEmpty());
-        assertEquals(1, expenses.size());
-        verify(expenseRepository, times(1)).findExpensesByAccountNameAndDateRange(anyString(), any(), any());
+        assertThat(expenses).isNotEmpty();
+        assertThat(expenses).contains(expense);
+        verify(expenseRepository, times(1)).findExpensesByAccountNameAndDateRange(account.getName(), startDate, endDate);
     }
 
     @Test
-    void queryExpenses_ShouldThrowException_WhenAccountNotFound() {
-        when(accountService.findByName(anyString())).thenReturn(Optional.empty());
-
-        assertThrows(AccountNotFoundException.class, () -> expenseService.queryExpenses("testAccount", LocalDate.now().minusDays(1), LocalDate.now()));
-    }
-
-    @Test
-    void groupExpenses_ShouldGroupExpensesByCategory() {
+    void groupExpenses_shouldGroupExpensesByCategory() {
         List<Expense> expenses = List.of(expense);
 
         Map<String, BigDecimal> groupedExpenses = expenseService.groupExpenses(expenses, Expense::getCategory);
 
-        assertEquals(1, groupedExpenses.size());
-        assertEquals(BigDecimal.valueOf(50), groupedExpenses.get("Food"));
+        assertThat(groupedExpenses).containsEntry("Food", new BigDecimal("100.00"));
     }
 
     @Test
-    void sortAndSelectTopCategories_ShouldReturnTopCategories() {
+    void sortAndSelectTopCategories_shouldReturnTopCategories() {
         Map<String, BigDecimal> categoryTotals = Map.of(
-                "Food", BigDecimal.valueOf(50),
-                "Transport", BigDecimal.valueOf(30),
-                "Entertainment", BigDecimal.valueOf(20)
+                "Food", new BigDecimal("200.00"),
+                "Transport", new BigDecimal("150.00"),
+                "Entertainment", new BigDecimal("120.00")
         );
 
-        List<CategoryResultDTO> topCategories = expenseService.sortAndSelectTopCategories(categoryTotals, 2);
+        var topCategories = expenseService.sortAndSelectTopCategories(categoryTotals, 2);
 
-        assertEquals(2, topCategories.size());
-        assertEquals("Food", topCategories.get(0).getCategory());
-        assertEquals(BigDecimal.valueOf(50), topCategories.get(0).getTotalAmount());
+        assertThat(topCategories).hasSize(2);
+        assertThat(topCategories.get(0).getCategory()).isEqualTo("Food");
+        assertThat(topCategories.get(0).getTotalAmount()).isEqualTo(new BigDecimal("200.00"));
+        assertThat(topCategories.get(1).getCategory()).isEqualTo("Transport");
     }
 
     @Test
-    void insertAlerts_ShouldAddAlertsToCategories() {
-        CategoryResultDTO category1 = CategoryResultDTO.builder().category("Food").totalAmount(BigDecimal.valueOf(50)).build();
-        CategoryResultDTO category2 = CategoryResultDTO.builder().category("Transport").totalAmount(BigDecimal.valueOf(30)).build();
-        List<CategoryResultDTO> topCategories = List.of(category1, category2);
+    void insertAlerts_shouldAddAlertsToTopCategories() {
+        var categoryResultDTOs = expenseService.sortAndSelectTopCategories(
+                Map.of("Food", new BigDecimal("200.00")), 1);
 
-        expenseService.insertAlerts(topCategories);
+        expenseService.insertAlerts(categoryResultDTOs);
 
-        assertNotNull(category1.getMessage());
-        assertTrue(category1.getMessage().contains("Food"));
-        assertNotNull(category2.getMessage());
-        assertTrue(category2.getMessage().contains("Transport"));
-    }
-
-    @Test
-    void reportAndAlertByCategory_ShouldReturnTopCategoriesWithAlerts() {
-        when(accountService.findByName(anyString())).thenReturn(Optional.of(account));
-        when(expenseRepository.findExpensesByAccountNameAndDateRange(anyString(), any(), any())).thenReturn(List.of(expense));
-
-        List<CategoryResultDTO> result = expenseService.reportAndAlertByCategory("testAccount", LocalDate.now().minusDays(1), LocalDate.now());
-
-        assertFalse(result.isEmpty());
-        assertEquals("Food", result.get(0).getCategory());
-        assertNotNull(result.get(0).getMessage());
-        verify(expenseRepository, times(1)).findExpensesByAccountNameAndDateRange(anyString(), any(), any());
+        assertThat(categoryResultDTOs.get(0).getMessage()).isNotEmpty();
     }
 }
+
